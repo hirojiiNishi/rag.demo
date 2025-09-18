@@ -51,19 +51,26 @@ ACL_CHOICES = ["public", "finance", "engineering", "sales"]
 # -----------------------------
 # .env / モデル
 # -----------------------------
-# .env の内容を環境変数に上書きして読み込む
-load_dotenv(override=True)
-
-api_key = os.getenv("OPENAI_API_KEY")
+# Cloud/ローカル両対応で取得
+api_key = (
+    os.getenv("OPENAI_API_KEY")
+    or (st.secrets.get("OPENAI_API_KEY") if hasattr(st, "secrets") else None)
+)
 
 if not api_key:
-    st.error("OPENAI_API_KEY が設定されていません。.env を確認してください。")
+    st.error(
+        "OPENAI_API_KEY が設定されていません。\n"
+        "・ローカル: プロジェクト直下の .env に  OPENAI_API_KEY=sk-... を記載\n"
+        "・Streamlit Cloud: 『Edit secrets』で下のTOMLを登録\n\n"
+        "[default]\nOPENAI_API_KEY = \"sk-...\"\n"
+    )
     st.stop()
 
-LLM_MODEL = "gpt-4.1-mini"  # 速度・互換性重視。
 
+# LangChain / OpenAI にキーを渡す
+LLM_MODEL = "gpt-4.1-mini"
 llm = ChatOpenAI(api_key=api_key, model=LLM_MODEL)
-rewriter = ChatOpenAI(api_key=api_key, model="gpt-4.1-mini")  # クエリ整形用
+rewriter = ChatOpenAI(api_key=api_key, model=LLM_MODEL)
 
 # -----------------------------
 # UIヘッダ
