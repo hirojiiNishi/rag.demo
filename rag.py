@@ -51,21 +51,31 @@ ACL_CHOICES = ["public", "finance", "engineering", "sales"]
 # -----------------------------
 # .env / モデル
 # -----------------------------
-# Cloud/ローカル両対応で取得
-api_key = (
-    os.getenv("OPENAI_API_KEY")
-    or (st.secrets.get("OPENAI_API_KEY") if hasattr(st, "secrets") else None)
-)
+api_key = None
 
+# 1) Cloud/ローカルで secrets.toml がある場合（例外安全）
+try:
+    api_key = st.secrets["OPENAI_API_KEY"]  # Cloud でもローカルでも OK
+except Exception:
+    api_key = None  # secrets 未設定ならスルー
+
+# 2) 見つからなければ .env を読む（ローカル運用）
+if not api_key:
+    load_dotenv(override=True)
+    api_key = os.getenv("OPENAI_API_KEY")
+
+# 3) 無ければエラー表示
 if not api_key:
     st.error(
         "OPENAI_API_KEY が設定されていません。\n"
-        "・ローカル: プロジェクト直下の .env に  OPENAI_API_KEY=sk-... を記載\n"
-        "・Streamlit Cloud: 『Edit secrets』で下のTOMLを登録\n\n"
-        "[default]\nOPENAI_API_KEY = \"sk-...\"\n"
+        "ローカル: .env に  OPENAI_API_KEY=sk-...\n"
+        "Cloud: 『Edit secrets』に下記を保存\n\n"
+        "[default]\nOPENAI_API_KEY = \"sk-...\""
     )
     st.stop()
 
+# ---（任意）デバッグ表示：ファイル有無だけ確認（st.secrets には触れない）---
+st.sidebar.caption(f"DEBUG: .env exists? {Path('.env').exists()}  |  .streamlit/secrets.toml exists? {Path('.streamlit/secrets.toml').exists()}")
 
 # LangChain / OpenAI にキーを渡す
 LLM_MODEL = "gpt-4.1-mini"
