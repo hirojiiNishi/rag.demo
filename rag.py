@@ -51,10 +51,13 @@ ACL_CHOICES = ["public", "finance", "engineering", "sales"]
 # -----------------------------
 # .env / モデル
 # -----------------------------
-load_dotenv()
+# .env の内容を環境変数に上書きして読み込む
+load_dotenv(override=True)
+
 api_key = os.getenv("OPENAI_API_KEY")
+
 if not api_key:
-    st.error("OPENAI_API_KEY が設定されていません。環境変数または .env を確認してください。")
+    st.error("OPENAI_API_KEY が設定されていません。.env を確認してください。")
     st.stop()
 
 LLM_MODEL = "gpt-4.1-mini"  # 速度・互換性重視。
